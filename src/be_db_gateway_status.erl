@@ -269,6 +269,7 @@ peer_online(Address, PeerBook, Ledger) ->
     end.
 
 -spec peer_recently_added(libp2p_crypto:pubkey_bin(), blockchain:ledger()) -> boolean().
+
 peer_recently_added(Address, Ledger) ->
     {ok, Height} = blockchain_ledger_v1:current_height(Ledger),
     {ok, _, [{AddedHeight}]} = ?PREPARED_QUERY(?S_PEER_ADDED, [?BIN_TO_B58(Address)]),

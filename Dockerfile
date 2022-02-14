@@ -1,6 +1,6 @@
 FROM erlang:22.3.2-alpine as deps-compiler
 
-RUN apk add --no-cache --update \
+RUN apk update && apk add --no-cache --update \
     git tar build-base linux-headers autoconf automake libtool pkgconfig \
     dbus-dev bzip2 bison flex gmp-dev cmake lz4 libsodium-dev openssl-dev \
     sed curl cargo
@@ -45,6 +45,11 @@ ENV COOKIE=etl \
     PATH=$PATH:/opt/etl/bin
 
 COPY --from=builder /opt/docker /opt/etl
+COPY scripts/start.sh /opt/etl/scripts/start.sh
+COPY scripts/reset.sh /opt/etl/scripts/reset.sh
 
-ENTRYPOINT ["/opt/etl/bin/blockchain_etl"]
-CMD ["foreground"]
+# ENTRYPOINT ["/opt/etl/bin/blockchain_etl"]
+# CMD ["foreground"]
+
+ENTRYPOINT ["/bin/sh"]
+CMD "/opt/etl/bin/blockchain_etl foreground"

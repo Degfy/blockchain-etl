@@ -41,17 +41,17 @@
 
 -define(HANDLER_MODULES, [
     be_db_block,
-    be_db_txn_actor,
+    % be_db_txn_actor,
     be_db_account,
     be_db_gateway,
     be_db_oracle_price,
     be_db_vars,
     be_db_stats,
-    be_db_reward,
-    be_db_packet,
-    be_db_validator,
-    be_db_oui,
-    be_db_dc_burn
+    be_db_reward
+    % ,be_db_packet,
+    % be_db_validator,
+    % be_db_oui,
+    % be_db_dc_burn
 ]).
 
 -record(state, {

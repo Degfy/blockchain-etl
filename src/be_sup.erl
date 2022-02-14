@@ -51,23 +51,21 @@ init([]) ->
     {PublicKey, ECDHFun, SigFun} =
         case libp2p_crypto:load_keys(SwarmKey) of
             {ok, #{secret := PrivKey0, public := PubKey}} ->
-                {PubKey, libp2p_crypto:mk_ecdh_fun(PrivKey0),
-                    libp2p_crypto:mk_sig_fun(PrivKey0)};
+                {PubKey, libp2p_crypto:mk_ecdh_fun(PrivKey0), libp2p_crypto:mk_sig_fun(PrivKey0)};
             {error, enoent} ->
                 KeyMap =
                     #{secret := PrivKey0, public := PubKey} = libp2p_crypto:generate_keys(
                         ecc_compact
                     ),
                 ok = libp2p_crypto:save_keys(KeyMap, SwarmKey),
-                {PubKey, libp2p_crypto:mk_ecdh_fun(PrivKey0),
-                    libp2p_crypto:mk_sig_fun(PrivKey0)}
+                {PubKey, libp2p_crypto:mk_ecdh_fun(PrivKey0), libp2p_crypto:mk_sig_fun(PrivKey0)}
         end,
     SeedNodeDNS = application:get_env(blockchain, seed_node_dns, []),
     SeedAddresses = string:tokens(
         lists:flatten([
             string:prefix(X, "blockchain-seed-nodes=")
-            || [X] <- inet_res:lookup(SeedNodeDNS, in, txt),
-               string:prefix(X, "blockchain-seed-nodes=") /= nomatch
+         || [X] <- inet_res:lookup(SeedNodeDNS, in, txt),
+            string:prefix(X, "blockchain-seed-nodes=") /= nomatch
         ]),
         ","
     ),
@@ -106,8 +104,9 @@ init([]) ->
             ?WORKER(db_follower, blockchain_follower, [
                 [{follower_module, {be_db_follower, [{base_dir, BaseDir}]}}]
             ]),
-            ?WORKER(be_db_pending_txn, []),
-            ?WORKER(be_db_geocoder, []),
-            ?WORKER(be_db_gateway_status, []),
-            ?WORKER(be_db_validator_status, [])
+            % ?WORKER(be_db_pending_txn, []),
+            % ?WORKER(be_db_geocoder, []),
+
+            ?WORKER(be_db_gateway_status, [])
+            %, ?WORKER(be_db_validator_status, [])
         ]}}.
