@@ -20,6 +20,11 @@
     peer_online/1
 ]).
 
+%% for debug
+-export([
+    peer_recently_added/2
+]).
+
 -export([adjust_request_rate/0]).
 
 %% Status for all hotspots in the gateway_inventory table is attempted
@@ -268,6 +273,8 @@ request_status(B58Address, PeerBook, Ledger, Requests) ->
     binary().
 peer_online(Address, PeerBook, Ledger) ->
     Ledger = blockchain:ledger(),
+    lager:info("## debug info:PeerBook=~p", [PeerBook]),
+
     case peer_recently_added(Address, Ledger) of
         true ->
             <<"online">>;
