@@ -209,13 +209,28 @@ request_status(B58Address, PeerBook, Ledger, Requests) ->
     Request = fun() ->
         try
             true = ets:insert_new(Requests, {B58Address, self()}),
+            lager:info("#1.ets:insert_new"),
+
             Address = ?B58_TO_BIN(B58Address),
+            lager:info("#2->~p", [Address]),
+
             Online = peer_online(Address),
+            lager:info("#3->~p", [Online]),
+
             PoCInterval = blockchain_utils:challenge_interval(Ledger),
+            lager:info("#5->~p", [PoCInterval]),
+
             LastChallenge = be_peer_status:peer_last_challenge(Address, Ledger),
+            lager:info("#6->~p", [LastChallenge]),
+
             Block = be_peer_status:peer_metadata(<<"height">>, Address, PeerBook),
+            lager:info("#7->~p", [Block]),
+
             PeerTime = be_peer_status:peer_time(Address, PeerBook),
+            lager:info("#8->~p", [PeerTime]),
+
             ListenAddrs = be_peer_status:peer_listen_addrs(Address, PeerBook),
+            lager:info("#9->~p", [ListenAddrs]),
 
             ?PREPARED_QUERY(
                 ?S_STATUS_INSERT,
