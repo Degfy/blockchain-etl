@@ -7,8 +7,6 @@ DROP TABLE block_signatures;
 
 DROP TABLE dc_burns;
 
-DROP TABLE gateways;
-
 DROP TABLE packets;
 
 ALTER TABLE rewards DROP CONSTRAINT "rewards_transaction_hash_fkey";
