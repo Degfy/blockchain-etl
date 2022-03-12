@@ -1,4 +1,5 @@
 FROM erlang:22.3.2-alpine as deps-compiler
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 RUN apk update && apk add --no-cache --update \
     git tar build-base linux-headers autoconf automake libtool pkgconfig \
@@ -32,6 +33,8 @@ RUN tar -zxvf _build/docker_etl/rel/*/*.tar.gz -C /opt/docker
 RUN mkdir -p /opt/docker/update
 
 FROM alpine as runner
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 RUN apk add --no-cache --update ncurses dbus gmp libsodium gcc
 RUN ulimit -n 64000
