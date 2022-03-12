@@ -2,8 +2,7 @@
 
 -define(CLI_MODULES, [
     be_cli_info,
-    be_cli_genesis,
-    be_cli_backfill
+    be_cli_genesis
 ]).
 
 -export([register_cli/0]).

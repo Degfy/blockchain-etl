@@ -16,12 +16,9 @@
 
 -define(S_BLOCK_HEIGHT, "block_height").
 -define(S_INSERT_BLOCK, "insert_block").
--define(S_INSERT_BLOCK_SIG, "insert_block_signature").
--define(S_INSERT_TXN, "insert_transaction").
 
 -record(state, {
     height :: non_neg_integer(),
-
     base_secs = calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}) :: pos_integer()
 }).
 
@@ -50,29 +47,9 @@ prepare_conn(Conn) ->
             ],
             []
         ),
-    {ok, S2} =
-        epgsql:parse(
-            Conn,
-            ?S_INSERT_BLOCK_SIG,
-            "insert into block_signatures (block, signer, signature) values ($1, $2, $3)",
-            []
-        ),
-    {ok, S3} =
-        epgsql:parse(
-            Conn,
-            ?S_INSERT_TXN,
-            [
-                "insert into transactions (block, time, hash, type, fields) values ($1, $2, $3, $4, $5) ",
-                "on conflict do nothing"
-            ],
-            []
-        ),
-
     #{
         ?S_BLOCK_HEIGHT => S0,
-        ?S_INSERT_BLOCK => S1,
-        ?S_INSERT_BLOCK_SIG => S2,
-        ?S_INSERT_TXN => S3
+        ?S_INSERT_BLOCK => S1
     }.
 
 %%
@@ -182,39 +159,4 @@ q_insert_block(Hash, Block, Ledger, State = #state{base_secs = BaseSecs}) ->
     ],
     [
         {?S_INSERT_BLOCK, Params}
-        | q_insert_signatures(Block, State) ++
-            q_insert_transactions(Block, Ledger, State)
     ].
-
-q_insert_signatures(Block, #state{}) ->
-    Height = blockchain_block_v1:height(Block),
-    Signatures = blockchain_block_v1:signatures(Block),
-    lists:map(
-        fun({Signer, Signature}) ->
-            {?S_INSERT_BLOCK_SIG, [
-                Height,
-                ?BIN_TO_B58(Signer),
-                ?BIN_TO_B64(Signature)
-            ]}
-        end,
-        Signatures
-    ).
-
-q_insert_transactions(Block, Ledger, #state{}) ->
-    Height = blockchain_block_v1:height(Block),
-    Time = blockchain_block_v1:time(Block),
-    Txns = blockchain_block_v1:transactions(Block),
-    JsonOpts = [{ledger, Ledger}, {chain, blockchain_worker:blockchain()}],
-    be_utils:pmap(
-        fun(T) ->
-            Json = #{type := Type} = be_txn:to_json(T, JsonOpts),
-            {?S_INSERT_TXN, [
-                Height,
-                Time,
-                ?BIN_TO_B64(blockchain_txn:hash(T)),
-                Type,
-                Json
-            ]}
-        end,
-        Txns
-    ).
