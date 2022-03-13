@@ -11,12 +11,15 @@
 %% api
 -export([calculate_location_hex/1]).
 
+-export([gateway_need_sync/1]).
+
 -behavior(be_db_worker).
 -behavior(be_db_follower).
 
 -record(state, {}).
 
 -define(S_INSERT_GATEWAY, "insert_gateway").
+-define(S_GATE_WAY_NEED_SYNC, "query_gateway_sync").
 
 %%
 %% be_db_worker
@@ -47,10 +50,27 @@ prepare_conn(Conn) ->
             ],
             []
         ),
-
+    {ok, S2} =
+        epgsql:parse(
+            Conn,
+            ?S_GATE_WAY_NEED_SYNC,
+            [
+                "select 1 as existed from need_sync_gateway where gateway_address = $1"
+            ],
+            []
+        ),
     #{
-        ?S_INSERT_GATEWAY => S1
+        ?S_INSERT_GATEWAY => S1,
+        ?S_GATE_WAY_NEED_SYNC => S2
     }.
+
+gateway_need_sync(Address) ->
+    {ok, _, [{Existed}]} = ?PREPARED_QUERY(?S_GATE_WAY_NEED_SYNC, [?BIN_TO_B58(Address)]),
+    case Existed of
+       1 -> true;
+        _ ->
+            false
+    end.
 
 %%
 %% be_block_handler
@@ -118,19 +138,19 @@ load_block(Conn, _Hash, Block, _Sync, Ledger, State = #state{}) ->
     Queries = maps:fold(
         fun(Key, _Value, Acc) ->
             case blockchain_ledger_v1:find_gateway_info(Key, Ledger) of
-                {ok, GW} ->
-                    Query =
-                        q_insert_gateway(
-                            BlockHeight,
-                            BlockTime,
-                            Key,
-                            GW,
-                            ChangeType,
-                            Ledger
-                        ),
-                    [Query | Acc];
-                {error, _} ->
-                    Acc
+                    {ok, GW} ->
+                        Query =
+                            q_insert_gateway(
+                                BlockHeight,
+                                BlockTime,
+                                Key,
+                                GW,
+                                ChangeType,
+                                Ledger
+                            ),
+                        [Query | Acc];
+                    {error, _} ->
+                        Acc
             end
         end,
         [],

@@ -82,7 +82,12 @@ load_block(Conn, _Hash, Block, _Sync, _Ledger, State = #state{}) ->
                         Entry
                     )
                 end,
-                maps:to_list(RewardMap)
+                list:filter(
+                    fun({{_Account, Gateway, _RewardType}, _Amount})
+                        -> be_db_gateway:gateway_need_sync(Gateway)
+                    end,
+                    maps:to_list(RewardMap)
+                )
             )
         end,
         Txns
