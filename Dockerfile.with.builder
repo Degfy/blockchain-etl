@@ -1,4 +1,4 @@
-FROM registry.cn-shanghai.aliyuncs.com/heltec-org/etl-deps-compiler as builder
+FROM registry.cn-shanghai.aliyuncs.com/heltec-org/etl-deps-compiler:3-15-0 as builder
 
 # Add our code
 COPY . .
