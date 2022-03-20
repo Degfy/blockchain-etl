@@ -15,3 +15,6 @@ ALTER TABLE transaction_actors DROP CONSTRAINT "transaction_actors_transaction_h
 DROP TABLE transactions;
 
 delete from transaction_actors where actor_role != 'gateway';
+
+drop trigger gateway_inventory_insert on gateway_inventory;
+drop function gateway_inventory_on_insert;

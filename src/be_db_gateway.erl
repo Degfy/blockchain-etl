@@ -65,12 +65,8 @@ prepare_conn(Conn) ->
     }.
 
 gateway_need_sync(Address) ->
-    {ok, _, [{Existed}]} = ?PREPARED_QUERY(?S_GATE_WAY_NEED_SYNC, [?BIN_TO_B58(Address)]),
-    case Existed of
-       1 -> true;
-        _ ->
-            false
-    end.
+    {ok, _, List} = ?PREPARED_QUERY(?S_GATE_WAY_NEED_SYNC, [?BIN_TO_B58(Address)]),
+    length(List)>0.
 
 %%
 %% be_block_handler

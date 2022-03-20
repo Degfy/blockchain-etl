@@ -4,6 +4,7 @@
 -include("be_db_worker.hrl").
 
 -export([prepare_conn/1]).
+-export([rewardsFilter/1, execute_queries/2]).
 %% be_block_handler
 -export([init/1, load_block/6]).
 %% api
@@ -82,12 +83,7 @@ load_block(Conn, _Hash, Block, _Sync, _Ledger, State = #state{}) ->
                         Entry
                     )
                 end,
-                list:filter(
-                    fun({{_Account, Gateway, _RewardType}, _Amount})
-                        -> be_db_gateway:gateway_need_sync(Gateway)
-                    end,
-                    maps:to_list(RewardMap)
-                )
+                rewardsFilter(maps:to_list(RewardMap))
             )
         end,
         Txns
@@ -99,6 +95,22 @@ load_block(Conn, _Hash, Block, _Sync, _Ledger, State = #state{}) ->
     be_db_follower:maybe_log_duration(db_reward_query_exec, StartQuery),
 
     {ok, State}.
+
+rewardsFilter(Rows) ->
+    lager:info("rewardsFilter first rows:~p", [Rows]),
+    [H | _] = Rows,
+    lager:info("rewardsFilter first row:~p", [H]),
+    lists:filter(
+        fun({{_Account, Gateway, _RewardType}, _Amount}) ->
+            lager:info("rewardsFilter Gateway:~p,~p", [Gateway, ?BIN_TO_B58(Gateway)]),
+            Rst = be_db_gateway:gateway_need_sync(Gateway),
+            lager:info("-->be_db_gateway:gateway_need_sync rst:~p,~p,~p", [
+                Gateway, ?BIN_TO_B58(Gateway), Rst
+            ]),
+            Rst
+        end,
+        Rows
+    ).
 
 execute_queries(Conn, Queries) when length(Queries) > 100 ->
     lists:foreach(
@@ -120,6 +132,8 @@ execute_queries(Conn, Queries) when length(Queries) > 10 ->
         end,
         be_utils:split_list(Queries, 10)
     );
+execute_queries(_Conn, Queries) when length(Queries) == 0 ->
+    ok;
 execute_queries(Conn, Queries) ->
     ok = ?BATCH_QUERY(Conn, [{?S_INSERT_REWARD, I} || I <- Queries]).
 
